@@ -14,7 +14,7 @@ EXCEL_FILE = "Dispatch_Management_Form.xlsx"
 def load_data():
     if os.path.exists(EXCEL_FILE):
         try:
-            df = pd.read_excel(EXCEL_FILE, sheet_name="Dispatch Tracker", skiprows=7)
+            df = pd.read_excel(EXCEL_FILE)
             df = df.dropna(subset=['Order No / የትዕዛዝ ቁጥር'])
             return df
         except Exception as e:
