@@ -13,10 +13,11 @@ EXCEL_FILE = "Dispatch_Management_Form.xlsx"
 def load_data():
     if os.path.exists(EXCEL_FILE):
         try:
-            # header=2 ማለት ርዕሶቹ ያሉት በ 3ተኛው ረድፍ ላይ ነው ማለት ነው
+            # ርዕሶቹ ያሉት በ 3ተኛው ረድፍ (header=2) ላይ መሆኑን ማረጋገጥ
             df = pd.read_excel(EXCEL_FILE, engine='openpyxl', header=2)
             # ባዶ ረድፎችን ማስወገድ
-            df = df.dropna(subset=['Order No / የትዕዛዝ ቁጥር'])
+            if 'Order No / የትዕዛዝ ቁጥር' in df.columns:
+                df = df.dropna(subset=['Order No / የትዕዛዝ ቁጥር'])
             return df
         except Exception as e:
             st.error(f"ስህተት ተፈጥሯል: {e}")
@@ -26,29 +27,43 @@ def load_data():
 df = load_data()
 
 if not df.empty:
+    # አምዶቹን ስሞች ማረጋገጥ (Trailing spaces ካላቸው ለማስወገድ)
+    df.columns = df.columns.str.strip()
+
     col1, col2, col3, col4 = st.columns(4)
     
     total_orders = len(df)
-    company_count = len(df[df['Fleet Ownership / የመኪና ባለቤትነት'] == 'Company']) if 'Fleet Ownership / የመኪና ባለቤትነት' in df.columns else 0
-    hired_count = len(df[df['Fleet Ownership / የመኪና ባለቤትነት'] == 'Hired/የኪራይ']) if 'Fleet Ownership / የመኪና ባለቤትነት' in df.columns else 0
     
-    # ወጪውን በትክክል ቁጥር እንዲሆን ማስተካከል
+    # የድርጅት እና የኪራይ መኪናዎችን በትክክል መቁጠር
+    company_count = 0
+    hired_count = 0
+    ownership_col = 'Fleet Ownership / የመኪና ባለቤትነት'
+    
+    if ownership_col in df.columns:
+        # ቃላቱን በጽሁፍ ፍለጋ ማረጋገጥ
+        company_count = len(df[df[ownership_col].astype(str).str.contains('Company', case=False, na=False)])
+        hired_count = len(df[df[ownership_col].astype(str).str.contains('Hired|የኪራይ', case=False, na=False)])
+
     total_cost = 0.0
-    if 'Freight Cost / የትራንስፖርት ወጪ' in df.columns:
-        total_cost = pd.to_numeric(df['Freight Cost / የትራንስፖርት ወጪ'], errors='coerce').sum()
+    cost_col = 'Freight Cost / የትራንስፖርት ወጪ'
+    if cost_col in df.columns:
+        total_cost = pd.to_numeric(df[cost_col], errors='coerce').sum()
 
     col1.metric("ጠቅላላ ትዕዛዞች", f"{total_orders}")
-    col2.metric("የድርጅት መኪና ብዛት", f"{company_count}")
-    col3.metric("የኪራይ መኪና ብዛት", f"{hired_count}")
-    col4.metric("ጠቅላላ የትራንስፖርት ወጪ", f"{total_cost:,.2f} ETB")
+    col2.metric("የድርጅት መኪና", f"{company_count}")
+    col3.metric("የኪራይ መኪና", f"{hired_count}")
+    col4.metric("ጠቅላላ ወጪ", f"{total_cost:,.2f} ETB")
 
     st.markdown("### 📋 የዕለት ትዕዛዞች እና ስምሪት ዝርዝር")
     st.dataframe(df, use_container_width=True)
 
     st.markdown("### 📊 በአቅጣጫ የተከፋፈለ ጭነት (Weight by Route)")
-    if 'Route / አቅጣጫ' in df.columns and 'Cargo Weight (Kg/Ton)' in df.columns:
-        df['Cargo Weight (Kg/Ton)'] = pd.to_numeric(df['Cargo Weight (Kg/Ton)'], errors='coerce')
-        route_summary = df.groupby('Route / አቅጣጫ')['Cargo Weight (Kg/Ton)'].sum()
+    route_col = 'Route / አቅጣጫ'
+    weight_col = 'Cargo Weight (Kg/Ton)'
+    
+    if route_col in df.columns and weight_col in df.columns:
+        df[weight_col] = pd.to_numeric(df[weight_col], errors='coerce')
+        route_summary = df.groupby(route_col)[weight_col].sum()
         st.bar_chart(route_summary)
 else:
-    st.warning(f"እባክዎ '{EXCEL_FILE}' የተባለው ፋይል ውስጥ ትክክለኛ መረጃ መኖሩን ይዩ!")
+    st.warning(f"እባክዎ '{EXCEL_FILE}' ፋይል ውስጥ ትክክለኛ መረጃ መኖሩን ይዩ!")
