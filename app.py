@@ -13,7 +13,10 @@ EXCEL_FILE = "Dispatch_Management_Form.xlsx"
 def load_data():
     if os.path.exists(EXCEL_FILE):
         try:
-            df = pd.read_excel(EXCEL_FILE, engine='openpyxl')
+            # header=2 ማለት ርዕሶቹ ያሉት በ 3ተኛው ረድፍ ላይ ነው ማለት ነው
+            df = pd.read_excel(EXCEL_FILE, engine='openpyxl', header=2)
+            # ባዶ ረድፎችን ማስወገድ
+            df = df.dropna(subset=['Order No / የትዕዛዝ ቁጥር'])
             return df
         except Exception as e:
             st.error(f"ስህተት ተፈጥሯል: {e}")
@@ -28,7 +31,11 @@ if not df.empty:
     total_orders = len(df)
     company_count = len(df[df['Fleet Ownership / የመኪና ባለቤትነት'] == 'Company']) if 'Fleet Ownership / የመኪና ባለቤትነት' in df.columns else 0
     hired_count = len(df[df['Fleet Ownership / የመኪና ባለቤትነት'] == 'Hired/የኪራይ']) if 'Fleet Ownership / የመኪና ባለቤትነት' in df.columns else 0
-    total_cost = df['Freight Cost / የትራንስፖርት ወጪ'].sum() if 'Freight Cost / የትራንስፖርት ወጪ' in df.columns else 0.0
+    
+    # ወጪውን በትክክል ቁጥር እንዲሆን ማስተካከል
+    total_cost = 0.0
+    if 'Freight Cost / የትራንስፖርት ወጪ' in df.columns:
+        total_cost = pd.to_numeric(df['Freight Cost / የትራንስፖርት ወጪ'], errors='coerce').sum()
 
     col1.metric("ጠቅላላ ትዕዛዞች", f"{total_orders}")
     col2.metric("የድርጅት መኪና ብዛት", f"{company_count}")
@@ -40,7 +47,8 @@ if not df.empty:
 
     st.markdown("### 📊 በአቅጣጫ የተከፋፈለ ጭነት (Weight by Route)")
     if 'Route / አቅጣጫ' in df.columns and 'Cargo Weight (Kg/Ton)' in df.columns:
+        df['Cargo Weight (Kg/Ton)'] = pd.to_numeric(df['Cargo Weight (Kg/Ton)'], errors='coerce')
         route_summary = df.groupby('Route / አቅጣጫ')['Cargo Weight (Kg/Ton)'].sum()
         st.bar_chart(route_summary)
 else:
-    st.warning(f"እባክዎ '{EXCEL_FILE}' የተባለው ፋይል ትክክለኛ የኤክሴል ፋይል ሆኖ ሪፖዚተሪዎ ውስጥ መኖሩን ይዩ!")
+    st.warning(f"እባክዎ '{EXCEL_FILE}' የተባለው ፋይል ውስጥ ትክክለኛ መረጃ መኖሩን ይዩ!")
