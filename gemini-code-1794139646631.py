@@ -1,0 +1,137 @@
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
+
+wb = openpyxl.Workbook()
+ws = wb.active
+ws.title = "Dispatch Tracker"
+
+ws.views.sheetView[0].showGridLines = True
+
+HEADER_FILL = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+HEADER_FONT = Font(name="Segoe UI", size=11, bold=True, color="FFFFFF")
+TITLE_FONT = Font(name="Segoe UI", size=16, bold=True, color="1F4E78")
+SUBTITLE_FONT = Font(name="Segoe UI", size=10, italic=True, color="595959")
+SECTION_FONT = Font(name="Segoe UI", size=11, bold=True, color="1F4E78")
+REGULAR_FONT = Font(name="Segoe UI", size=10)
+BOLD_FONT = Font(name="Segoe UI", size=10, bold=True)
+
+THIN_SIDE = Side(border_style="thin", color="D9D9D9")
+BORDER_ALL = Border(left=THIN_SIDE, right=THIN_SIDE, top=THIN_SIDE, bottom=THIN_SIDE)
+TOTAL_TOP = Side(border_style="thin", color="000000")
+TOTAL_BOTTOM = Side(border_style="double", color="000000")
+BORDER_TOTAL = Border(top=TOTAL_TOP, bottom=TOTAL_BOTTOM, left=THIN_SIDE, right=THIN_SIDE)
+
+ws['A1'] = "DAILY DISPATCH & FLEET ALLOCATION TRACKER"
+ws['A1'].font = TITLE_FONT
+ws['A2'] = "የዕለታዊ የሎጂስቲክስ፣ የመኪና ምደባ እና የስምሪት መከታተያ ፎርም"
+ws['A2'].font = SUBTITLE_FONT
+
+ws['A4'] = "የዕለቱ ማጠቃለያ (Daily Summary)"
+ws['A4'].font = SECTION_FONT
+
+kpi_headers = ["ጠቅላላ ትዕዛዝ", "የድርጅት መኪና ጭነት", "የኪራይ መኪና ጭነት", "ጠቅላላ የትራንስፖርት ወጪ (ETB)"]
+for col_idx, text in enumerate(kpi_headers, start=1):
+    cell = ws.cell(row=5, column=col_idx, value=text)
+    cell.font = Font(name="Segoe UI", size=9, bold=True, color="333333")
+    cell.alignment = Alignment(horizontal="center", vertical="center")
+    cell.fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
+    cell.border = BORDER_ALL
+
+ws['A6'] = '=COUNTA(A9:A28)'
+ws['B6'] = '=COUNTIF(G9:G28, "Company/የድርጅት")'
+ws['C6'] = '=COUNTIF(G9:G28, "Hired/የኪራይ")'
+ws['D6'] = '=SUM(K9:K28)'
+
+for col_idx in range(1, 5):
+    cell = ws.cell(row=6, column=col_idx)
+    cell.font = Font(name="Segoe UI", size=12, bold=True, color="1F4E78")
+    cell.alignment = Alignment(horizontal="center", vertical="center")
+    cell.border = BORDER_ALL
+    if col_idx == 4:
+        cell.number_format = '#,##0.00'
+    else:
+        cell.number_format = '#,##0'
+
+headers = [
+    "Order No / የትዕዛዝ ቁጥር", "Customer Name / ደንበኛ", "Destination / ቦታ/ከተማ",
+    "Route / አቅጣጫ", "Cargo Weight (Kg/Ton)", "Vehicle Type / የመኪና ዓይነት",
+    "Fleet Ownership / የመኪና ባለቤትነት", "Plate No / የሰሌዳ ቁጥር",
+    "Driver Name & Phone / አሽከርካሪ", "Status / ሁኔታ", "Freight Cost / የትራንስፖርት ወጪ"
+]
+
+row_start = 8
+for col_idx, h_text in enumerate(headers, start=1):
+    cell = ws.cell(row=row_start, column=col_idx, value=h_text)
+    cell.font = HEADER_FONT
+    cell.fill = HEADER_FILL
+    cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+sample_data = [
+    ("ORD-1001", "Abebe Trading", "Hossana", "", 3500, "Isuzu 3.5T", "Company/የድርጅት", "AA-3-A12345", "Kebede (0911000001)", "Dispatched", 0),
+    ("ORD-1002", "Bishoftu Retail", "Bishoftu", "", 1200, "V8 Van", "Company/የድርጅት", "AA-3-B67890", "Tadesse (0911000002)", "Dispatched", 0),
+    ("ORD-1003", "Zenebe Store", "Ambo", "", 5000, "Sino Truck", "Hired/የኪራይ", "OR-3-C11223", "Alamu (0922000003)", "Dispatched", 8500),
+    ("ORD-1004", "Gelan Factory", "Gelan", "", 2200, "Isuzu 3.5T", "Company/የድርጅት", "AA-3-A12345", "Kebede (0911000001)", "Pending", 0),
+    ("ORD-1005", "Gojjam Wholesalers", "Injibara", "", 10000, "Trailer", "Hired/የኪራይ", "ETH-3-D44556", "Chala (0933000004)", "Dispatched", 18000),
+]
+
+for r_idx in range(9, 29):
+    data_idx = r_idx - 9
+    if data_idx < len(sample_data):
+        row_vals = sample_data[data_idx]
+        ws.cell(row=r_idx, column=1, value=row_vals[0])
+        ws.cell(row=r_idx, column=2, value=row_vals[1])
+        ws.cell(row=r_idx, column=3, value=row_vals[2])
+        ws.cell(row=r_idx, column=4, value=f'=IF(C{r_idx}="","",IF(OR(C{r_idx}="Hossana",C{r_idx}="Jimma",C{r_idx}="Sebeta",C{r_idx}="Kella",C{r_idx}="Fonko"),"ደቡብ / ደቡብ ምዕራብ",IF(OR(C{r_idx}="Bishoftu",C{r_idx}="Gelan",C{r_idx}="Tulu Dimtu",C{r_idx}="Koye Fiche"),"ደቡብ ምሥራቅ (Expressway)",IF(OR(C{r_idx}="Ambo",C{r_idx}="Asgori",C{r_idx}="Alem Bank"),"ምዕራብ (Ambo Road)",IF(OR(C{r_idx}="Injibara",C{r_idx}="d/markos"),"ሰሜን (Gojjam Road)",IF(OR(C{r_idx}="Summit",C{r_idx}="Sendafa",C{r_idx}="Kotetebe",C{r_idx}="L/Tafo",C{r_idx}="Bole Arabsa"),"ምሥራቅ / ሰሜን ምሥራቅ","ሌላ / አዲስ አበባ ውስጥ"))))))')
+        ws.cell(row=r_idx, column=5, value=row_vals[4])
+        ws.cell(row=r_idx, column=6, value=row_vals[5])
+        ws.cell(row=r_idx, column=7, value=row_vals[6])
+        ws.cell(row=r_idx, column=8, value=row_vals[7])
+        ws.cell(row=r_idx, column=9, value=row_vals[8])
+        ws.cell(row=r_idx, column=10, value=row_vals[9])
+        ws.cell(row=r_idx, column=11, value=row_vals[10])
+    else:
+        ws.cell(row=r_idx, column=4, value=f'=IF(C{r_idx}="","",IF(OR(C{r_idx}="Hossana",C{r_idx}="Jimma",C{r_idx}="Sebeta",C{r_idx}="Kella",C{r_idx}="Fonko"),"ደቡብ / ደቡብ ምዕራብ",IF(OR(C{r_idx}="Bishoftu",C{r_idx}="Gelan",C{r_idx}="Tulu Dimtu",C{r_idx}="Koye Fiche"),"ደቡብ ምሥራቅ (Expressway)",IF(OR(C{r_idx}="Ambo",C{r_idx}="Asgori",C{r_idx}="Alem Bank"),"ምዕራብ (Ambo Road)",IF(OR(C{r_idx}="Injibara",C{r_idx}="d/markos"),"ሰሜን (Gojjam Road)",IF(OR(C{r_idx}="Summit",C{r_idx}="Sendafa",C{r_idx}="Kotetebe",C{r_idx}="L/Tafo",C{r_idx}="Bole Arabsa"),"ምሥራቅ / ሰሜን ምሥራቅ","ሌላ / አዲስ አበባ ውስጥ"))))))')
+
+    for c_idx in range(1, 12):
+        cell = ws.cell(row=r_idx, column=c_idx)
+        cell.font = REGULAR_FONT
+        cell.border = BORDER_ALL
+        if c_idx in [1, 4, 6, 7, 8, 10]:
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+        elif c_idx in [5, 11]:
+            cell.alignment = Alignment(horizontal="right", vertical="center")
+        else:
+            cell.alignment = Alignment(horizontal="left", vertical="center")
+        if c_idx == 5:
+            cell.number_format = '#,##0'
+        elif c_idx == 11:
+            cell.number_format = '#,##0.00'
+
+total_row = 29
+ws.cell(row=total_row, column=1, value="ጠቅላላ ድምር (Total)").font = BOLD_FONT
+ws.cell(row=total_row, column=5, value=f"=SUM(E9:E{total_row-1})").font = BOLD_FONT
+ws.cell(row=total_row, column=11, value=f"=SUM(K9:K{total_row-1})").font = BOLD_FONT
+
+ws.cell(row=total_row, column=5).number_format = '#,##0'
+ws.cell(row=total_row, column=11).number_format = '#,##0.00'
+
+for c_idx in range(1, 12):
+    cell = ws.cell(row=total_row, column=c_idx)
+    cell.border = BORDER_TOTAL
+
+ws.column_dimensions['A'].width = 18
+ws.column_dimensions['B'].width = 22
+ws.column_dimensions['C'].width = 18
+ws.column_dimensions['D'].width = 28
+ws.column_dimensions['E'].width = 18
+ws.column_dimensions['F'].width = 16
+ws.column_dimensions['G'].width = 20
+ws.column_dimensions['H'].width = 16
+ws.column_dimensions['I'].width = 24
+ws.column_dimensions['J'].width = 15
+ws.column_dimensions['K'].width = 20
+
+wb.save("Dispatch_Management_Form.xlsx")
+print("Excel generated successfully!")
