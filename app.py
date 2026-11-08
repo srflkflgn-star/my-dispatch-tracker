@@ -13,7 +13,8 @@ EXCEL_FILE = "Dispatch_Management_Form.xlsx"
 def load_data():
     if os.path.exists(EXCEL_FILE):
         try:
-            df = pd.read_excel(EXCEL_FILE)
+            # እዚህ ጋር engine='openpyxl' ተጨምሯል
+            df = pd.read_excel(EXCEL_FILE, engine='openpyxl')
             df = df.dropna(subset=['Order No / የትዕዛዝ ቁጥር'])
             return df
         except Exception as e:
