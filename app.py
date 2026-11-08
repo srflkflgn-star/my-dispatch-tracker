@@ -18,6 +18,8 @@ def load_data():
             df = df.dropna(subset=['Order No / የትዕዛዝ ቁጥር'])
             return df
         except Exception as e:
+    st.error(f"ስህተት ተፈጥሯል: {e}")
+    return pd.DataFrame()
             return pd.DataFrame()
     return pd.DataFrame()
 
