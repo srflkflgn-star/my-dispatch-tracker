@@ -14,7 +14,6 @@ EXCEL_FILE = "Dispatch_Management_Form.xlsx"
 def load_data():
     if os.path.exists(EXCEL_FILE):
         try:
-            # ርዕሶቹ ያሉት በ 3ተኛው ረድፍ (header=2) ላይ መሆኑን ማረጋገጥ
             df = pd.read_excel(EXCEL_FILE, engine='openpyxl', header=2)
             if 'Order No / የትዕዛዝ ቁጥር' in df.columns:
                 df = df.dropna(subset=['Order No / የትዕዛዝ ቁጥር'])
@@ -70,22 +69,49 @@ else:
     st.warning(f"እባክዎ '{EXCEL_FILE}' ፋይል ውስጥ ትክክለኛ መረጃ መኖሩን ይዩ!")
 
 # ==========================================
-# 4. የክልሎች እና የጉዞ መስመር መመሪያ (Route Tracker)
+# 4. የክልሎች እና የጉዞ መስመር መመሪያ (Route Tracker with Intermediate Towns)
 # ==========================================
 st.markdown("---")
-st.title("🗺️ የክልሎች እና የጉዞ መስመር (Route Tracker) መመሪያ")
+st.title("🗺️ የጉዞ መስመር እና መካከለኛ ከተሞች ማግኛ (Route & Stops Tracker)")
 
+# የኢትዮጵያ ዋና ዋና ሀይዌይ መስመሮች እና በመንገዱ ላይ የሚገኙ ከተሞች ትስስር
 routes_data = {
-    "አዲስ አበባ": ["አዳማ", "ባህር ዳር", "ሀዋሳ", "ጅማ", "ደሴ"],
-    "አዳማ": ["አዲስ አበባ", "ሰመራ", "ሐረር", "አዋሽ"],
-    "ባህር ዳር": ["አዲስ አበባ", "ጎንደር", "ደብረ ማርቆስ"],
-    "ሀዋሳ": ["አዲስ አበባ", "ዲላ", "አርባ ምንጭ"],
-    "ደሴ": ["አዲስ አበባ", "መቀሌ", "ሰመራ"],
-    "ሐረር": ["አዳማ", "ድሬዳዋ"],
-    "ድሬዳዋ": ["ሐረር", "አዋሽ"],
-    "መቀሌ": ["ደሴ", "አክሱም"],
-    "ጅማ": ["አዲስ አበባ", "ቤንች ማጂ"],
-    "አርባ ምንጭ": ["ሀዋሳ", "አስታማሚ ከተሞች"]
+    # የሀዋሳ መስመር (Addis - Hawassa Corridor)
+    "አዲስ አበባ": ["ቢሾፍቱ", "አዳማ", "ደብረ ብርሃን", "ደብረ ማርቆስ", "ጅማ"],
+    "ቢሾፍቱ": ["አዲስ አበባ", "ሞጆ"],
+    "ሞጆ": ["ቢሾፍቱ", "አዳማ", "መቂ"],
+    "አዳማ": ["አዲስ አበባ", "ሞጆ", "አዋሽ"],
+    "መቂ": ["ሞጆ", "ዝዋይ"],
+    "ዝዋይ": ["መቂ", "ሻሸመኔ"],
+    "ሻሸመኔ": ["ዝዋይ", "ሀዋሳ"],
+    "ሀዋሳ": ["ሻሸመኔ", "ዲላ"],
+    "ዲላ": ["ሀዋሳ", "አርባ ምንጭ"],
+    "አርባ ምንጭ": ["ዲላ"],
+    
+    # የሰሜን መስመር (Dessie & Mekelle Corridor)
+    "ደብረ ብርሃን": ["አዲስ አበባ", "ሰንዳፋ", "ደሴ"],
+    "ሰንዳፋ": ["አዲስ አበባ", "ደብረ ብርሃን"],
+    "ደሴ": ["ደብረ ብርሃን", "ወልዲያ", "ሰመራ"],
+    "ወልዲያ": ["ደሴ", "መቀሌ"],
+    "መቀሌ": ["ወልዲያ", "አክሱም"],
+    "አክሱም": ["መቀሌ"],
+
+    # የባህር ዳር መስመር (Bahir Dar & Gondar Corridor)
+    "ደብረ ማርቆስ": ["አዲስ አበባ", "ባህር ዳር"],
+    "ባህር ዳር": ["ደብረ ማርቆስ", "ጎንደር"],
+    "ጎንደር": ["ባህር ዳር"],
+
+    # የጅማ መስመር (Jimma Corridor)
+    "ጅማ": ["አዲስ አበባ", "ቦንጋ"],
+    "ቦንጋ": ["ጅማ"],
+
+    # የምስራቅ መስመር (Awash - Dire Dawa - Harar Corridor)
+    "አዋሽ": ["አዳማ", "መተሀራ"],
+    "መተሀራ": ["አዋሽ", "ጭሮ"],
+    "ጭሮ": ["መተሀራ", "ድሬዳዋ"],
+    "ድሬዳዋ": ["ጭሮ", "ሐረር"],
+    "ሐረር": ["ድሬዳዋ"],
+    "ሰመራ": ["ደሴ"]
 }
 
 G = nx.Graph()
@@ -93,34 +119,34 @@ for city, neighbors in routes_data.items():
     for neighbor in neighbors:
         G.add_edge(city, neighbor)
 
-selected_city = st.selectbox("የሚፈልጉትን ከተማ/ክልል ይምረጡ ወይም ይጻፉ:", list(routes_data.keys()))
+# ሁሉንም ከተሞች በዝርዝር ለማስቀመጥ
+all_cities = sorted(list(routes_data.keys()))
 
-if selected_city:
-    st.markdown(f"### 📍 ስለ **{selected_city}** የተገኙ መረጃዎች፡")
-    connected_destinations = routes_data.get(selected_city, [])
-    
-    col_a, col_b = st.columns(2)
-    
-    with col_a:
-        st.info("🔄 ቀጥተኛ መውጫ መስመሮች (Next Destinations):")
-        for dest in connected_destinations:
-            st.write(f"👉 **{dest}**")
-            
-    with col_b:
-        st.success("⬅️ የሚቀድሙት/መነሻ ሊሆኑ የሚችሉ:")
-        predecessors = [city for city, targets in routes_data.items() if selected_city in targets]
-        for pred in predecessors:
-            st.write(f"👈 **{pred}**")
+st.markdown("### 🛣️ የሁለት መዳረሻዎች ሙሉ የጉዞ መስመር እና ማቆሚያዎች")
+col_start, col_end = st.columns(2)
+with col_start:
+    start_point = st.selectbox("መነሻ ከተማ:", all_cities, index=all_cities.index("አዲስ አበባ") if "አዲስ አበባ" in all_cities else 0, key="start_route")
+with col_end:
+    end_point = st.selectbox("ድረሻ ከተማ:", all_cities, index=all_cities.index("ሀዋሳ") if "ሀዋሳ" in all_cities else min(1, len(all_cities)-1), key="end_route")
 
-    st.markdown("---")
-    st.subheader("🛣️ የሁለት መዳረሻዎች አጭር መንገድ ማግኛ")
-    dest_options = list(routes_data.keys())
-    start_point = st.selectbox("መነሻ ከተማ:", dest_options, index=0, key="start_route")
-    end_point = st.selectbox("ድረሻ ከተማ:", dest_options, index=min(1, len(dest_options)-1), key="end_route")
-    
-    if st.button("መስመር ፈልግ (Find Route)"):
-        try:
-            path = nx.shortest_path(G, source=start_point, target=end_point)
-            st.success(f"✅ ትክክለኛው የጉዞ ቅደም ተከተል: {' ➔ '.join(path)}")
-        except nx.NetworkXNoPath:
-            st.warning("⚠️ በእነዚህ ከተሞች መካከል ቀጥተኛ የተያያዘ መስመር አልተገኘም።")
+if st.button("ሙሉውን የመንገድ ቅደም ተከተል ፈልግ (Find Full Route)"):
+    try:
+        # አጫጭሩን መንገድ ከመካከለኛ ከተሞች ጋር ማግኘት
+        path = nx.shortest_path(G, source=start_point, target=end_point)
+        
+        st.success(f"✅ ከ **{start_point}** እስከ **{end_point}** ያለው ትክክለኛው የጉዞ ቅደም ተከተል እና ማቆሚያዎች:")
+        
+        # መንገዱን በደረጃ በደረጃ ማሳየት
+        for i, stop in enumerate(path, 1):
+            if i == 1:
+                st.markdown(f"🟢 **{i}. መነሻ:** {stop}")
+            elif i == len(path):
+                st.markdown(f"🏁 **{i}. መድረሻ:** {stop}")
+            else:
+                st.markdown(f"📍 **{i}. ማቆሚያ / የሚያልፍበት ከተማ:** {stop}")
+                
+        # በእይታ እንዲመች በቀስት ማሳየት
+        st.info("➔ ".join(path))
+        
+    except nx.NetworkXNoPath:
+        st.warning(f"⚠️ ከ '{start_point}' እስከ '{end_point}' ያለው ቀጥተኛ የመንገድ ትስስር በዚህ ዝርዝር ውስጥ አልተገኘም።")
