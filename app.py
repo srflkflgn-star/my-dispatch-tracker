@@ -74,9 +74,8 @@ else:
 st.markdown("---")
 st.title("🏢 የድርጅት ሎኬሽን (AMG Holdings - Gelan) እና የጉዞ መስመር መቆጣጠሪያ")
 
-# የድርጅቱ መገኛ ጎግል ካርታ ሊንክ (በአፑ ውስጥ እንዲታይ)
 st.markdown("### 📍 የድርጅቱ መገኛ (AMG Holdings Industry Park - Gelan)")
-st.markdown("የድርጅቱ ማዕከል/ፋብሪካ የሚገኘው በ **ገላን (Gelan)** ይገኛል። ከዚህ በታች ካለው ሊንክ በቀጥታ በ Google Maps ማየት ይችላሉ፡")
+st.markdown("የድርጅቱ ማዕከል/ፋብሪካ የሚገኘው በ **ገላን (Gelan)** ይገኛል[cite: 1, 3]። ከዚህ በታች ካለው ሊንክ በቀጥታ በ Google Maps ማየት ይችላሉ፡")
 st.markdown("[🗺️ የ AMG Holdings Gelan ሎኬሽን በ Google Maps ለመክፈት እዚህ ይጫኑ](https://www.google.com/maps/place//data=!4m2!3m1!19sChIJKQJqLAB5SxYR0u9ih_8JK5Q)")
 
 edges_with_distance = [
@@ -94,23 +93,30 @@ edges_with_distance = [
     ("አዲስ አበባ - ቃሊቲ", "ቱሉ ዲምቱ", 10),
     ("ቱሉ ዲምቱ", "ደብረ ዘይት/ቢሾፍቱ", 20),
     ("ደብረ ዘይት/ቢሾፍቱ", "ሞጆ", 30),
-    ("ሞጆ", "AMG Holdings - Gelan", 15), # ወደ ድርጅቱ የሚገባ መስመር
+    ("ሞጆ", "AMG Holdings - Gelan", 15),
 
-    # ከገላን ወደ ሌሎች የክልል ከተሞች የሚቀጥል መስመር
+    # ከገላን እና ከሞጆ በመቂ መካከል ያሉ ተጨማሪ ዝርዝር ማቆሚያዎች (ሰፈሮች)
     ("AMG Holdings - Gelan", "አዳማ", 45),
     ("AMG Holdings - Gelan", "ሞጆ", 15),
+    
+    # **በሞጆ እና መቂ መካከል ያሉ ትንንሽ ማቆሚያዎች/ሰፈሮች**
+    ("ሞጆ", "አቃቂ ኬላ (ሞጆ)", 10),
+    ("አቃቂ ኬላ (ሞጆ)", "ዶዶላ መገናኛ", 15),
+    ("ዶዶላ መገናኛ", "መቂ", 25),
+
+    ("መቂ", "Kella/መቂ ኬላ", 15),
+    ("Kella/መቂ ኬላ", "ዝዋይ", 20),
+    ("ዝዋይ", "አላባ", 60),
+    ("አላባ", "ሻሸመኔ", 50),
+    ("ሻሸመኔ", "ሀዋሳ", 25),
+    ("ሀዋሳ", "ዲላ", 90),
+
+    # ሌሎች መስመሮች
     ("አዳማ", "አዋሽ", 100),
     ("አዋሽ", "መተሀራ", 30),
     ("መተሀራ", "ድሬዳዋ", 170),
     ("ድሬዳዋ", "ሐረር", 55),
     
-    ("ሞጆ", "መቂ", 50),
-    ("መቂ", "ዝዋይ", 35),
-    ("ዝዋይ", "ሻሸመኔ", 110),
-    ("ሻሸመኔ", "ሀዋሳ", 25),
-    ("ሀዋሳ", "ዲላ", 90),
-
-    # ጎጃም መስመር
     ("አዲስ አበባ - መርካቶ", "አዲስ አበባ - አስኮ", 6),
     ("አዲስ አበባ - አስኮ", "ሱሉልታ", 15),
     ("ሱሉልታ", "ደብረ ማርቆስ", 245),
@@ -123,23 +129,22 @@ for u, v, w in edges_with_distance:
 
 all_locations = sorted(list(G.nodes()))
 
-st.markdown("### 🛣️ ከየትኛውም ሰፈር ወይም ከተማ እስከ AMG Holdings (Gelan) ያለው ርቀት ማግኛ")
+st.markdown("### 🛣️ ከየትኛውም ሰፈር ወይም ከተማ እስከ መድረሻ ያለው ርቀት እና የሰፈሮች ዝርዝር ማግኛ")
 col_start, col_end = st.columns(2)
 with col_start:
-    start_point = st.selectbox("መነሻ (ሰፈር ወይም ከተማ):", all_locations, index=0, key="start_route_amg")
+    start_point = st.selectbox("መነሻ (ሰፈር ወይም ከተማ):", all_locations, index=0, key="start_route_amg_det")
 with col_end:
-    # ነባሪ መድረሻውን AMG Holdings - Gelan እናድርገው
-    default_end_idx = all_locations.index("AMG Holdings - Gelan") if "AMG Holdings - Gelan" in all_locations else min(1, len(all_locations)-1)
-    end_point = st.selectbox("ድረሻ (መድረሻ ሎኬሽን):", all_locations, index=default_end_idx, key="end_route_amg")
+    default_end_idx = all_locations.index("መቂ") if "መቂ" in all_locations else min(1, len(all_locations)-1)
+    end_point = st.selectbox("ድረሻ (መድረሻ ሎኬሽን):", all_locations, index=default_end_idx, key="end_route_amg_det")
 
-if st.button("ወደ AMG Holdings የሚወስደውን መንገድ እና ርቀት ፈልግ"):
+if st.button("መንገዱን፣ ሰፈሮቹን እና ርቀት ፈልግ"):
     try:
         path = nx.shortest_path(G, source=start_point, target=end_point, weight='weight')
         total_distance = nx.shortest_path_length(G, source=start_point, target=end_point, weight='weight')
         
         st.success(f"✅ ከ **{start_point}** እስከ **{end_point}** ያለው ጠቅላላ ርቀት: **{total_distance} ኪ.ሜ (Km)**")
         
-        st.markdown("#### 📍 በመንገዱ ላይ የሚያልፉ ማቆሚያዎች እና የክፍል ርቀቶች:")
+        st.markdown("#### 📍 በመንገዱ ላይ የሚያልፉ ሰፈሮች፣ ማቆሚያዎች እና የክፍል ርቀቶች:")
         
         for i in range(len(path) - 1):
             u = path[i]
@@ -155,5 +160,3 @@ if st.button("ወደ AMG Holdings የሚወስደውን መንገድ እና ር�
         
     except nx.NetworkXNoPath:
         st.warning(f"⚠️ ከ '{start_point}' እስከ '{end_point}' ያለው ቀጥተኛ የመንገድ ትስስር አልተገኘም።")
-    
-            
