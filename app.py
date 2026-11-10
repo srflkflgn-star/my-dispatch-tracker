@@ -69,15 +69,31 @@ else:
     st.warning(f"እባክዎ '{EXCEL_FILE}' ፋይል ውስጥ ትክክለኛ መረጃ መኖሩን ይዩ!")
 
 # ==========================================
-# 4. የክልሎች እና የጉዞ መስመር ከዝርዝር ማቆሚያዎች ጋር (Detailed Route & Stops Tracker)
+# 4. የአዲስ አበባ ሰፈሮች እና የክልል መስመር መቆጣጠሪያ (Detailed Addis & Route Tracker)
 # ==========================================
 st.markdown("---")
-st.title("🗺️ የጉዞ መስመር፣ ሰፈሮች እና ማቆሚያዎች መቆጣጠሪያ")
+st.title("🗺️ የአዲስ አበባ ሰፈሮች፣ የጉዞ መስመር እና ርቀት (Km) መቆጣጠሪያ")
 
-# የኢትዮጵያ ዋና ዋና ሀይዌይ መስመሮች እና በመንገዱ ላይ የሚገኙ ትንንሽ ከተሞች/ሰፈሮች ከነ ኪሎሜትራቸው
 edges_with_distance = [
-    # ሀዋሳ መስመር
-    ("አዲስ አበባ", "ቃሊቲ", 15),
+    # የአዲስ አበባ ውስጥ ዋና ዋና ሰፈሮች ትስስር
+    ("ፒያሳ", "አራት ኪሎ", 3),
+    ("አራት ኪሎ", "መገናኛ", 7),
+    ("ፒያሳ", "መርካቶ", 4),
+    ("መርካቶ", "አስကို", 6),
+    ("አስကို", "ሰበታ", 18),
+    ("ፒያሳ", "ቦሌ", 8),
+    ("ቦሌ", "መገናኛ", 4),
+    ("ቦሌ", "ቦሌ ሚካኤል", 3),
+    ("ቦሌ ሚካኤል", "ጎሮ", 4),
+    ("ጎሮ", "ሳሪስ", 6),
+    ("ሳሪስ", "ቃሊቲ", 5),
+    ("መገናኛ", "ሰሚት", 5),
+    ("ሰሚት", "ጎተራ", 8),
+    ("ጎተራ", "ቃሊቲ", 6),
+    ("መገናኛ", "ለገጣፎ", 10),
+    ("ለገጣፎ", "ሰንዳፋ", 28),
+
+    # ሀዋሳ / ደቡብ መስመር (ከቃሊቲ/ሰፈሮች የሚነሳ)
     ("ቃሊቲ", "ቱሉ ዲምቱ", 10),
     ("ቱሉ ዲምቱ", "ደብረ ዘይት/ቢሾፍቱ", 20),
     ("ደብረ ዘይት/ቢሾፍቱ", "ሞጆ", 30),
@@ -91,8 +107,8 @@ edges_with_distance = [
     ("አርצו", "ዲላ", 50),
     ("ዲላ", "አርባ ምንጭ", 130),
     
-    # ጎጃም መስመር (ከአዲስ አበባ እስከ ባህር ዳር በዝርዝር)
-    ("አዲስ አበባ", "ሱሉልታ", 25),
+    # ጎጃም መስመር (ከመርካቶ/አስကို/ሰፈሮች የሚነሳ)
+    ("አስကို", "ሱሉልታ", 15),
     ("ሱሉልታ", "ምარიም", 30),
     ("ምარიም", "ጎንደር በር/ፊንጫ", 40),
     ("ጎንደር በር/ፊንጫ", "ደብረ ማርቆስ", 205),
@@ -103,8 +119,7 @@ edges_with_distance = [
     ("ባህር ዳር", "አማኑኤል", 75),
     ("አማኑኤል", "ጎንደር", 100),
 
-    # ደብረ ብርሃን - ደሴ - መቀሌ መስመር
-    ("አዲስ አበባ", "ሰንዳፋ", 38),
+    # ደብረ ብርሃን - ደሴ - መቀሌ መስመር (ከለገጣፎ/መገናኛ የሚነሳ)
     ("ሰንዳፋ", "ዐርባ ከርጠቻ", 30),
     ("ዐርባ ከርጠቻ", "ደብረ ብርሃን", 62),
     ("ደብረ ብርሃን", "አዲስ አለም", 45),
@@ -118,7 +133,6 @@ edges_with_distance = [
     ("መቀሌ", "አክሱም", 240),
 
     # ጅማ መስመር
-    ("አዲስ አበባ", "ሰበታ", 25),
     ("ሰበታ", "እንጦጦ/ኢሉ", 35),
     ("እንጦጦ/ኢሉ", "አዲስ አለም (ጅማ መንገድ)", 30),
     ("አዲስ አለም (ጅማ መንገድ)", "አሶሳ መገናኛ", 60),
@@ -141,23 +155,23 @@ G = nx.Graph()
 for u, v, w in edges_with_distance:
     G.add_edge(u, v, weight=w)
 
-all_cities = sorted(list(G.nodes()))
+all_locations = sorted(list(G.nodes()))
 
-st.markdown("### 🛣️ የጉዞ ርቀት እና የሰፈሮች/ማቆሚያዎች ዝርዝር ማግኛ")
+st.markdown("### 🛣️ ከየትኛውም የአዲስ አበባ ሰፈር እስከ ክልል ከተሞች ርቀት እና ማቆሚያዎች ማግኛ")
 col_start, col_end = st.columns(2)
 with col_start:
-    start_point = st.selectbox("መነሻ ከተማ:", all_cities, index=all_cities.index("አዲስ አበባ") if "አዲስ አበባ" in all_cities else 0, key="start_route_det")
+    start_point = st.selectbox("መነሻ ሰፈር/ከተማ:", all_locations, index=all_locations.index("ቦሌ") if "ቦሌ" in all_locations else 0, key="start_route_addis")
 with col_end:
-    end_point = st.selectbox("ድረሻ ከተማ:", all_cities, index=all_cities.index("ደብረ ማርቆስ") if "ደብረ ማርቆስ" in all_cities else min(1, len(all_cities)-1), key="end_route_det")
+    end_point = st.selectbox("ድረሻ ከተማ:", all_locations, index=all_locations.index("ሀዋሳ") if "ሀዋሳ" in all_locations else min(1, len(all_locations)-1), key="end_route_addis")
 
-if st.button("ሁሉንም ሰፈሮች እና ርቀት ፈልግ (Find All Stops & Distance)"):
+if st.button("የሰፈሮችን ዝርዝር እና ርቀት ፈልግ (Find Route & Stops)"):
     try:
         path = nx.shortest_path(G, source=start_point, target=end_point, weight='weight')
         total_distance = nx.shortest_path_length(G, source=start_point, target=end_point, weight='weight')
         
-        st.success(f"✅ ከ **{start_point}** እስከ **{end_point}** ያለው ጠቅላላ የጉዞ ርቀት: **ኮንትራት/ጠቅላላ {total_distance} ኪ.ሜ (Km)**")
+        st.success(f"✅ ከ **{start_point}** እስከ **{end_point}** ያለው ጠቅላላ የጉዞ ርቀት: **{total_distance} ኪ.ሜ (Km)**")
         
-        st.markdown("#### 📍 በመንገዱ ላይ የሚያልፉ ማቆሚያዎች፣ ሰፈሮች እና የክፍል ርቀቶች:")
+        st.markdown("#### 📍 በመንገዱ ላይ የሚያልፉ የአዲስ አበባ ሰፈሮች፣ ማቆሚያዎች እና የክፍል ርቀቶች:")
         
         for i in range(len(path) - 1):
             u = path[i]
@@ -172,4 +186,5 @@ if st.button("ሁሉንም ሰፈሮች እና ርቀት ፈልግ (Find All Sto
         st.info("➔ ".join(path))
         
     except nx.NetworkXNoPath:
-        st.warning(f"⚠️ ከ '{start_point}' እስከ '{end_point}' ያለው ቀጥተኛ የመንገድ ትስስር አልተገኘም።")
+        st.warning(f"⚠️ ከ '{start_point}' እስከ '{end_point}' ያለው ቀጥተኛ የመንገድ ትስስር በዚህ መረብ ውስጥ አልተገኘም።")
+    
