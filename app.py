@@ -69,84 +69,81 @@ else:
     st.warning(f"እባክዎ '{EXCEL_FILE}' ፋይል ውስጥ ትክክለኛ መረጃ መኖሩን ይዩ!")
 
 # ==========================================
-# 4. የክልሎች እና የጉዞ መስመር መመሪያ (Route Tracker with Intermediate Towns)
+# 4. የክልሎች እና የጉዞ መስመር ከኪሎሜተር ስሌት ጋር (Route & Distance Tracker)
 # ==========================================
 st.markdown("---")
-st.title("🗺️ የጉዞ መስመር እና መካከለኛ ከተሞች ማግኛ (Route & Stops Tracker)")
+st.title("🗺️ የጉዞ መስመር፣ ማቆሚያዎች እና የርቀት (Km) መቆጣጠሪያ")
 
-# የኢትዮጵያ ዋና ዋና ሀይዌይ መስመሮች እና በመንገዱ ላይ የሚገኙ ከተሞች ትስስር
-routes_data = {
-    # የሀዋሳ መስመር (Addis - Hawassa Corridor)
-    "አዲስ አበባ": ["ቢሾፍቱ", "አዳማ", "ደብረ ብርሃን", "ደብረ ማርቆስ", "ጅማ"],
-    "ቢሾፍቱ": ["አዲስ አበባ", "ሞጆ"],
-    "ሞጆ": ["ቢሾፍቱ", "አዳማ", "መቂ"],
-    "አዳማ": ["አዲስ አበባ", "ሞጆ", "አዋሽ"],
-    "መቂ": ["ሞጆ", "ዝዋይ"],
-    "ዝዋይ": ["መቂ", "ሻሸመኔ"],
-    "ሻሸመኔ": ["ዝዋይ", "ሀዋሳ"],
-    "ሀዋሳ": ["ሻሸመኔ", "ዲላ"],
-    "ዲላ": ["ሀዋሳ", "አርባ ምንጭ"],
-    "አርባ ምንጭ": ["ዲላ"],
+# በከተሞች መካከል ያሉ ግምታዊ ርቀቶች (በኪ.ሜ) የተካተቱበት መረብ
+edges_with_distance = [
+    ("አዲስ አበባ", "ቢሾፍቱ", 45),
+    ("ቢሾፍቱ", "ሞጆ", 30),
+    ("ሞጆ", "አዳማ", 25),
+    ("ሞጆ", "መቂ", 50),
+    ("መቂ", "ዝዋይ", 35),
+    ("ዝዋይ", "ሻሸመኔ", 110),
+    ("ሻሸመኔ", "ሀዋሳ", 25),
+    ("ሀዋሳ", "ዲላ", 90),
+    ("ዲላ", "አርባ ምንጭ", 130),
     
-    # የሰሜን መስመር (Dessie & Mekelle Corridor)
-    "ደብረ ብርሃን": ["አዲስ አበባ", "ሰንዳፋ", "ደሴ"],
-    "ሰንዳፋ": ["አዲስ አበባ", "ደብረ ብርሃን"],
-    "ደሴ": ["ደብረ ብርሃን", "ወልዲያ", "ሰመራ"],
-    "ወልዲያ": ["ደሴ", "መቀሌ"],
-    "መቀሌ": ["ወልዲያ", "አክሱም"],
-    "አክሱም": ["መቀሌ"],
+    ("አዲስ አበባ", "ሰንዳፋ", 38),
+    ("ሰንዳፋ", "ደብረ ብርሃን", 92),
+    ("ደብረ ብርሃን", "ደሴ", 260),
+    ("ደሴ", "ሰመራ", 265),
+    ("ደሴ", "ወልዲያ", 120),
+    ("ወልዲያ", "መቀሌ", 200),
+    ("መቀሌ", "አክሱም", 240),
 
-    # የባህር ዳር መስመር (Bahir Dar & Gondar Corridor)
-    "ደብረ ማርቆስ": ["አዲስ አበባ", "ባህር ዳር"],
-    "ባህር ዳር": ["ደብረ ማርቆስ", "ጎንደር"],
-    "ጎንደር": ["ባህር ዳር"],
+    ("አዲስ አበባ", "ደብረ ማርቆስ", 300),
+    ("ደብረ ማርቆስ", "ባህር ዳር", 260),
+    ("ባህር ዳር", "ጎንደር", 175),
 
-    # የጅማ መስመር (Jimma Corridor)
-    "ጅማ": ["አዲስ አበባ", "ቦንጋ"],
-    "ቦንጋ": ["ጅማ"],
+    ("አዲስ አበባ", "ጅማ", 350),
+    ("ጅማ", "ቦንጋ", 110),
 
-    # የምስራቅ መስመር (Awash - Dire Dawa - Harar Corridor)
-    "አዋሽ": ["አዳማ", "መተሀራ"],
-    "መተሀራ": ["አዋሽ", "ጭሮ"],
-    "ጭሮ": ["መተሀራ", "ድሬዳዋ"],
-    "ድሬዳዋ": ["ጭሮ", "ሐረር"],
-    "ሐረር": ["ድሬዳዋ"],
-    "ሰመራ": ["ደሴ"]
-}
+    ("አዳማ", "አዋሽ", 100),
+    ("አዋሽ", "መተሀራ", 30),
+    ("መተሀራ", "ጭሮ", 140),
+    ("ጭሮ", "ድሬዳዋ", 130),
+    ("ድሬዳዋ", "ሐረር", 55)
+]
 
+# Graph መፍጠር እና ርቀቶችን (weight) መጫን
 G = nx.Graph()
-for city, neighbors in routes_data.items():
-    for neighbor in neighbors:
-        G.add_edge(city, neighbor)
+for u, v, w in edges_with_distance:
+    G.add_edge(u, v, weight=w)
 
-# ሁሉንም ከተሞች በዝርዝር ለማስቀመጥ
-all_cities = sorted(list(routes_data.keys()))
+all_cities = sorted(list(G.nodes()))
 
-st.markdown("### 🛣️ የሁለት መዳረሻዎች ሙሉ የጉዞ መስመር እና ማቆሚያዎች")
+st.markdown("### 🛣️ የጉዞ ርቀት እና ማቆሚያዎች ማግኛ")
 col_start, col_end = st.columns(2)
 with col_start:
-    start_point = st.selectbox("መነሻ ከተማ:", all_cities, index=all_cities.index("አዲስ አበባ") if "አዲስ አበባ" in all_cities else 0, key="start_route")
+    start_point = st.selectbox("መነሻ ከተማ:", all_cities, index=all_cities.index("አዲስ አበባ") if "አዲስ አበባ" in all_cities else 0, key="start_route_km")
 with col_end:
-    end_point = st.selectbox("ድረሻ ከተማ:", all_cities, index=all_cities.index("ሀዋሳ") if "ሀዋሳ" in all_cities else min(1, len(all_cities)-1), key="end_route")
+    end_point = st.selectbox("ድረሻ ከተማ:", all_cities, index=all_cities.index("ሀዋሳ") if "ሀዋሳ" in all_cities else min(1, len(all_cities)-1), key="end_route_km")
 
-if st.button("ሙሉውን የመንገድ ቅደም ተከተል ፈልግ (Find Full Route)"):
+if st.button("ርቀቱን እና ሙሉውን መስመር ፈልግ (Calculate Route & Distance)"):
     try:
-        # አጫጭሩን መንገድ ከመካከለኛ ከተሞች ጋር ማግኘት
-        path = nx.shortest_path(G, source=start_point, target=end_point)
+        # አጭር መንገድ እና ጠቅላላ ርቀት ማሰላት
+        path = nx.shortest_path(G, source=start_point, target=end_point, weight='weight')
+        total_distance = nx.shortest_path_length(G, source=start_point, target=end_point, weight='weight')
         
-        st.success(f"✅ ከ **{start_point}** እስከ **{end_point}** ያለው ትክክለኛው የጉዞ ቅደም ተከተል እና ማቆሚያዎች:")
+        st.success(f"✅ ከ **{start_point}** እስከ **{end_point}** ያለው ጠቅላላ የጉዞ ርቀት: **{total_distance} ኪ.ሜ (Km)**")
         
-        # መንገዱን በደረጃ በደረጃ ማሳየት
-        for i, stop in enumerate(path, 1):
-            if i == 1:
-                st.markdown(f"🟢 **{i}. መነሻ:** {stop}")
-            elif i == len(path):
-                st.markdown(f"🏁 **{i}. መድረሻ:** {stop}")
-            else:
-                st.markdown(f"📍 **{i}. ማቆሚያ / የሚያልፍበት ከተማ:** {stop}")
+        st.markdown("#### 📍 የደረጃ በደረጃ ማቆሚያዎች እና የክፍል ርቀቶች:")
+        
+        for i in range(len(path) - 1):
+            u = path[i]
+            v = path[i+1]
+            dist = G[u][v]['weight']
+            if i == 0:
+                st.markdown(f"🟢 **1. መነሻ:** {u}")
+            st.markdown(f"👉 ከ **{u}** ወደ **{v}** ➔ **{dist} ኪ.ሜ**")
+            if i == len(path) - 2:
+                st.markdown(f"🏁 **መድረሻ:** {v}")
                 
-        # በእይታ እንዲመች በቀስት ማሳየት
-        st.info("➔ ".join(path))
+        st.info("ፋና ➔ " + " ➔ ".join(path))
         
     except nx.NetworkXNoPath:
-        st.warning(f"⚠️ ከ '{start_point}' እስከ '{end_point}' ያለው ቀጥተኛ የመንገድ ትስስር በዚህ ዝርዝር ውስጥ አልተገኘም።")
+        st.warning(f"⚠️ ከ '{start_point}' እስከ '{end_point}' ያለው ቀጥተኛ የመንገድ ትስስር አልተገኘም።")
+    
