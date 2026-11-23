@@ -69,17 +69,77 @@ else:
     st.warning(f"እባክዎ '{EXCEL_FILE}' ፋይል ውስጥ ትክክለኛ መረጃ መኖሩን ይዩ!")
 
 # ==========================================
-# 4. የኢትዮጵያ አጠቃላይ የጉዞ መስመር እና የርቀት መቆጣጠሪያ (Comprehensive Road Network)
+# 4. የብዙ ማቆሚያዎች (Multi-Stop) እና የአጫጫን ቅደም ተከተል (LIFO) ማቀናበሪያ
 # ==========================================
 st.markdown("---")
-st.title("🏢 የድርጅት ሎኬሽን (AMG Holdings - Gelan) እና አጠቃላይ የኢትዮጵያ የጉዞ መስመር")
+st.title("📦 የብዙ ማቆሚያዎች ጭነት እና የአጫጫን ቅደም ተከተል (Multi-Stop & LIFO Planner)")
+
+col_t1, col_t2 = st.columns(2)
+with col_t1:
+    truck_capacity_qtl = st.number_input("የተመደበው መኪና የመጫን አቅም (በኩንታል):", min_value=1.0, value=100.0, step=5.0)
+with col_t2:
+    num_stops = st.number_input("በዚህ ጉዞ የሚኖሩ ማቆሚያዎች ብዛት:", min_value=1, max_value=15, value=3, step=1)
+
+st.markdown("#### 📍 ማቆሚያዎቹን ከመነሻ እስከ መድረሻ በጉዞ ቅደም ተከተል ያስገቡ:")
+
+stops_list = []
+for i in range(int(num_stops)):
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        loc_name = st.text_input(f"ማቆሚያ #{i+1} (ቦታ/ደንበኛ):", key=f"stop_loc_{i}", placeholder=f"ለምሳሌ፦ ማቆሚያ {i+1}")
+    with c2:
+        load_kg = st.number_input(f"ክብደት (በኪ.ግ - Kg):", min_value=0.0, value=0.0, step=50.0, key=f"stop_kg_{i}")
+    
+    if loc_name.strip():
+        stops_list.append({
+            "የጉዞ ቅደም ተከተል": i + 1,
+            "ማቆሚያ / ደንበኛ": loc_name.strip(),
+            "ክብደት (Kg)": load_kg,
+            "ክብደት (ኩንታል)": load_kg / 100.0,
+            "ክብደት (ቶን)": load_kg / 1000.0
+        })
+
+if stops_list:
+    stops_df = pd.DataFrame(stops_list)
+    total_kg = stops_df["ክብደት (Kg)"].sum()
+    total_qtl = stops_df["ክብደት (ኩንታል)"].sum()
+    total_ton = stops_df["ክብደት (ቶን)"].sum()
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("ጠቅላላ ክብደት (Kg)", f"{total_kg:,.2f} Kg")
+    m2.metric("ጠቅላላ ክብደት (ኩንታል)", f"{total_qtl:,.2f} ኩንታል")
+    m3.metric("ጠቅላላ ክብደት (ቶን)", f"{total_ton:,.2f} ቶን")
+
+    if total_qtl > truck_capacity_qtl:
+        st.error(f"⚠️ ማስጠንቀቂያ፡ ጠቅላላው ጭነት ({total_qtl:,.2f} ኩንታል) ከመኪናው አቅም ({truck_capacity_qtl:,.2f} ኩንታል) በ **{total_qtl - truck_capacity_qtl:,.2f} ኩንታል** በልጧል!")
+    else:
+        st.success(f"✅ ክብደቱ በመኪናው አቅም ልክ ነው (ቀሪ ቦታ: {truck_capacity_qtl - total_qtl:,.2f} ኩንታል)።")
+
+    st.markdown("#### 🏗️ የመጋዘን አጫጫን ቅደም ተከተል (LIFO - መጨረሻ የሚጫን መጀመሪያ ይራገፋል):")
+    loading_df = stops_df.iloc[::-1].copy()
+    loading_df.insert(0, "የመጫኛ ቅደም ተከተል", range(1, len(loading_df) + 1))
+    st.dataframe(loading_df, use_container_width=True, hide_index=True)
+
+# ==========================================
+# 5. ፈጣን የኩንታል እና ቶን ማስያዣ (Quick Weight Converter)
+# ==========================================
+st.markdown("---")
+st.subheader("⚖️ ፈጣን የጭነት ክብደት ማስያዣ (Kg ➔ ኩንታል / ቶን)")
+quick_kg = st.number_input("የጭነቱን ክብደት በኪሎ ግራም (Kg) ያስገቡ:", min_value=0.0, value=1000.0, step=100.0, key="quick_calc")
+q1, q2 = st.columns(2)
+q1.metric("ኩንታል (Quintal)", f"{quick_kg / 100:,.2f} ኩንታል")
+q2.metric("ቶን (Ton)", f"{quick_kg / 1000:,.2f} ቶን")
+
+# ==========================================
+# 6. የድርጅት ሎኬሽን (AMG Holdings Gelan) እና የኢትዮጵያ የጉዞ መስመር
+# ==========================================
+st.markdown("---")
+st.title("🏢 የድርጅት ሎኬሽን (AMG Holdings - Gelan) እና የጉዞ መስመር መቆጣጠሪያ")
 
 st.markdown("### 📍 የድርጅቱ መገኛ (AMG Holdings Industry Park - Gelan)")
-st.markdown("የድርጅቱ ማዕከል/ፋብሪካ የሚገኘው በ **ገላን (Gelan)** ይገኛል። ከዚህ በታች ካለው ሊንክ በቀጥታ በ Google Maps ማየት ይችላሉ፡")
 st.markdown("[🗺️ የ AMG Holdings Gelan ሎኬሽን በ Google Maps ለመክፈት እዚህ ይጫኑ](https://www.google.com/maps/place//data=!4m2!3m1!19sChIJKQJqLAB5SxYR0u9ih_8JK5Q)")
 
 edges_with_distance = [
-    # --- 1. የአዲስ አበባ ሰፈሮች እና የኢንዱስትሪ ዞኖች ትስስር ---
     ("አዲስ አበባ - ፒያሳ", "አዲስ አበባ - አራት ኪሎ", 3),
     ("አዲስ አበባ - አራት ኪሎ", "አዲስ አበባ - መገናኛ", 7),
     ("አዲስ አበባ - ፒያሳ", "አዲስ አበባ - መርካቶ", 4),
@@ -90,11 +150,12 @@ edges_with_distance = [
     ("አዲስ አበባ - ቃሊቲ", "ቱሉ ዲምቱ", 10),
     ("ቱሉ ዲምቱ", "AMG Holdings - Gelan", 12),
 
-    # --- 2. የደቡብ / ሀዋሳ / ሞያሌ ኮሪደር (Southern Corridor) ---
     ("AMG Holdings - Gelan", "ቢሾፍቱ (ደብረ ዘይት)", 20),
     ("ቢሾፍቱ (ደብረ ዘይት)", "ሞጆ", 30),
     ("ሞጆ", "አዳማ", 25),
-    ("ሞጆ", "መቂ", 50),
+    ("ሞጆ", "አቃቂ ኬላ (ሞጆ)", 10),
+    ("አቃቂ ኬላ (ሞጆ)", "ዶዶላ መገናኛ", 15),
+    ("ዶዶላ መገናኛ", "መቂ", 25),
     ("መቂ", "ዝዋይ (ቱሉ አብረሃ)", 35),
     ("ዝዋይ (ቱሉ አብረሃ)", "አላባ", 60),
     ("አላባ", "ሻሸመኔ", 50),
@@ -106,7 +167,6 @@ edges_with_distance = [
     ("አርባ ምንጭ", "ሀመር / አስታማሚ", 120),
     ("ሀመር / አስታማሚ", "ሞያሌ (የኢትዮ-ኬንያ ድንበር)", 250),
 
-    # --- 3. የምስራቅ / አዋሽ / ድሬዳዋ / ሐረር / ጅጅጋ ኮሪደር (Eastern Corridor) ---
     ("አዳማ", "አዋሽ", 100),
     ("አዋሽ", "መተሀራ", 30),
     ("መተሀራ", "አዋሽ አርባ", 40),
@@ -118,7 +178,6 @@ edges_with_distance = [
     ("ሐረር", "ባቢሌ", 50),
     ("ባቢሌ", "ጅጅጋ", 100),
 
-    # --- 4. ሰሜን / ጎጃም ኮሪደር (Northern - Gojam Corridor) ---
     ("አዲስ አበባ - አስኮ", "ሙግር መገናኛ", 10),
     ("ሙግር መገናኛ", "ሱሉልታ", 15),
     ("ሱሉልታ", "ማርያም (ሱሉልታ አከባቢ)", 25),
@@ -137,7 +196,6 @@ edges_with_distance = [
     ("አክሱም", "አድዋ", 35),
     ("አድዋ", "መቀሌ", 200),
 
-    # --- 5. የሰሜን-ምስራቅ / ደብረ ብርሃን / ደሴ / መቀሌ ኮሪደር (Dessie - Mekelle Corridor) ---
     ("አዲስ አበባ - መገናኛ", "አዲስ አበባ - ለገጣፎ", 10),
     ("አዲስ አበባ - ለገጣፎ", "ሰንዳፋ", 28),
     ("ሰንዳፋ", "ዐርባ ከርጠቻ", 30),
@@ -152,7 +210,6 @@ edges_with_distance = [
     ("ወልዲያ", "አላማጣ", 70),
     ("አላማጣ", "መቀሌ", 130),
 
-    # --- 6. ምዕራብ / ጅማ / ቤንች ማጂ / ጋምቤላ ኮሪደር (Western Corridor) ---
     ("አዲስ አበባ - መርካቶ", "ሰበታ", 22),
     ("ሰበታ", "እንጦጦ/ኢሉ", 35),
     ("እንጦጦ/ኢሉ", "አዲስ አለም (ጅማ መንገድ)", 30),
@@ -165,7 +222,6 @@ edges_with_distance = [
     ("ደምቢዶሎ", "ጋምቤላ", 100)
 ]
 
-# Graph መፍጠር
 G = nx.Graph()
 for u, v, w in edges_with_distance:
     G.add_edge(u, v, weight=w)
@@ -177,7 +233,7 @@ col_start, col_end = st.columns(2)
 with col_start:
     start_point = st.selectbox("መነሻ (ሰፈር ወይም ከተማ):", all_locations, index=all_locations.index("AMG Holdings - Gelan") if "AMG Holdings - Gelan" in all_locations else 0, key="start_route_all")
 with col_end:
-    end_point = st.selectbox("ድረሻ (መድረሻ ሎኬሽን):", all_locations, index=all_locations.index("ድሬዳዋ") if "ድሬዳዋ" in all_locations else min(1, len(all_locations)-1), key="end_route_all")
+    end_point = st.selectbox("ድረሻ (መድረሻ ሎኬሽን):", all_locations, index=all_locations.index("ሀዋሳ") if "ሀዋሳ" in all_locations else min(1, len(all_locations)-1), key="end_route_all")
 
 if st.button("አጠቃላይ መስመሩን፣ ሰፈሮቹን እና ርቀት ፈልግ"):
     try:
