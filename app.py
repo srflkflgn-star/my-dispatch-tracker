@@ -1,4 +1,4 @@
-import streamlit as st
+     import streamlit as st
 import pandas as pd
 import os
 import networkx as nx
@@ -69,76 +69,8 @@ else:
     st.warning(f"እባክዎ '{EXCEL_FILE}' ፋይል ውስጥ ትክክለኛ መረጃ መኖሩን ይዩ!")
 
 # ==========================================
-# 4. የብዙ ማቆሚያዎች (Multi-Stop) እና የአጫጫን ቅደም ተከተል (LIFO) ማቀናበሪያ
+# የኢትዮጵያ የመንገድ መረብ (Road Network Graph)
 # ==========================================
-st.markdown("---")
-st.title("📦 የብዙ ማቆሚያዎች ጭነት እና የአጫጫን ቅደም ተከተል (Multi-Stop & LIFO Planner)")
-
-col_t1, col_t2 = st.columns(2)
-with col_t1:
-    truck_capacity_qtl = st.number_input("የተመደበው መኪና የመጫን አቅም (በኩንታል):", min_value=1.0, value=100.0, step=5.0)
-with col_t2:
-    num_stops = st.number_input("በዚህ ጉዞ የሚኖሩ ማቆሚያዎች ብዛት:", min_value=1, max_value=15, value=3, step=1)
-
-st.markdown("#### 📍 ማቆሚያዎቹን ከመነሻ እስከ መድረሻ በጉዞ ቅደም ተከተል ያስገቡ:")
-
-stops_list = []
-for i in range(int(num_stops)):
-    c1, c2 = st.columns([2, 1])
-    with c1:
-        loc_name = st.text_input(f"ማቆሚያ #{i+1} (ቦታ/ደንበኛ):", key=f"stop_loc_{i}", placeholder=f"ለምሳሌ፦ ማቆሚያ {i+1}")
-    with c2:
-        load_kg = st.number_input(f"ክብደት (በኪ.ግ - Kg):", min_value=0.0, value=0.0, step=50.0, key=f"stop_kg_{i}")
-    
-    if loc_name.strip():
-        stops_list.append({
-            "የጉዞ ቅደም ተከተል": i + 1,
-            "ማቆሚያ / ደንበኛ": loc_name.strip(),
-            "ክብደት (Kg)": load_kg,
-            "ክብደት (ኩንታል)": load_kg / 100.0,
-            "ክብደት (ቶን)": load_kg / 1000.0
-        })
-
-if stops_list:
-    stops_df = pd.DataFrame(stops_list)
-    total_kg = stops_df["ክብደት (Kg)"].sum()
-    total_qtl = stops_df["ክብደት (ኩንታል)"].sum()
-    total_ton = stops_df["ክብደት (ቶን)"].sum()
-
-    m1, m2, m3 = st.columns(3)
-    m1.metric("ጠቅላላ ክብደት (Kg)", f"{total_kg:,.2f} Kg")
-    m2.metric("ጠቅላላ ክብደት (ኩንታል)", f"{total_qtl:,.2f} ኩንታል")
-    m3.metric("ጠቅላላ ክብደት (ቶን)", f"{total_ton:,.2f} ቶን")
-
-    if total_qtl > truck_capacity_qtl:
-        st.error(f"⚠️ ማስጠንቀቂያ፡ ጠቅላላው ጭነት ({total_qtl:,.2f} ኩንታል) ከመኪናው አቅም ({truck_capacity_qtl:,.2f} ኩንታል) በ **{total_qtl - truck_capacity_qtl:,.2f} ኩንታል** በልጧል!")
-    else:
-        st.success(f"✅ ክብደቱ በመኪናው አቅም ልክ ነው (ቀሪ ቦታ: {truck_capacity_qtl - total_qtl:,.2f} ኩንታል)።")
-
-    st.markdown("#### 🏗️ የመጋዘን አጫጫን ቅደም ተከተል (LIFO - መጨረሻ የሚጫን መጀመሪያ ይራገፋል):")
-    loading_df = stops_df.iloc[::-1].copy()
-    loading_df.insert(0, "የመጫኛ ቅደም ተከተል", range(1, len(loading_df) + 1))
-    st.dataframe(loading_df, use_container_width=True, hide_index=True)
-
-# ==========================================
-# 5. ፈጣን የኩንታል እና ቶን ማስያዣ (Quick Weight Converter)
-# ==========================================
-st.markdown("---")
-st.subheader("⚖️ ፈጣን የጭነት ክብደት ማስያዣ (Kg ➔ ኩንታል / ቶን)")
-quick_kg = st.number_input("የጭነቱን ክብደት በኪሎ ግራም (Kg) ያስገቡ:", min_value=0.0, value=1000.0, step=100.0, key="quick_calc")
-q1, q2 = st.columns(2)
-q1.metric("ኩንታል (Quintal)", f"{quick_kg / 100:,.2f} ኩንታል")
-q2.metric("ቶን (Ton)", f"{quick_kg / 1000:,.2f} ቶን")
-
-# ==========================================
-# 6. የድርጅት ሎኬሽን (AMG Holdings Gelan) እና የኢትዮጵያ የጉዞ መስመር
-# ==========================================
-st.markdown("---")
-st.title("🏢 የድርጅት ሎኬሽን (AMG Holdings - Gelan) እና የጉዞ መስመር መቆጣጠሪያ")
-
-st.markdown("### 📍 የድርጅቱ መገኛ (AMG Holdings Industry Park - Gelan)")
-st.markdown("[🗺️ የ AMG Holdings Gelan ሎኬሽን በ Google Maps ለመክፈት እዚህ ይጫኑ](https://www.google.com/maps/place//data=!4m2!3m1!19sChIJKQJqLAB5SxYR0u9ih_8JK5Q)")
-
 edges_with_distance = [
     ("አዲስ አበባ - ፒያሳ", "አዲስ አበባ - አራት ኪሎ", 3),
     ("አዲስ አበባ - አራት ኪሎ", "አዲስ አበባ - መገናኛ", 7),
@@ -228,7 +160,96 @@ for u, v, w in edges_with_distance:
 
 all_locations = sorted(list(G.nodes()))
 
-st.markdown("### 🛣️ ከየትኛውም የአዲስ አበባ ሰፈር ወይም የክልል ከተማ እስከ መድረሻ ያለው ርቀት እና ማቆሚያዎች")
+# ==========================================
+# 4. በመንገድ ርቀት የተደረደረ የብዙ ማቆሚያዎች (Multi-Stop) እና የአጫጫን ቅደም ተከተል (LIFO)
+# ==========================================
+st.markdown("---")
+st.title("📦 በመንገድ ርቀት የሚደረደር የጭነት እና የአጫጫን ቅደም ተከተል (Distance-Based Multi-Stop & LIFO)")
+
+col_t1, col_t2, col_t3 = st.columns(3)
+with col_t1:
+    default_origin_idx = all_locations.index("AMG Holdings - Gelan") if "AMG Holdings - Gelan" in all_locations else 0
+    origin_loc = st.selectbox("የመጫኛ / መነሻ ቦታ:", all_locations, index=default_origin_idx, key="origin_dist_planner")
+with col_t2:
+    truck_capacity_qtl = st.number_input("የተመደበው መኪና አቅም (በኩንታል):", min_value=1.0, value=100.0, step=5.0, key="cap_dist_planner")
+with col_t3:
+    num_stops = st.number_input("የማቆሚያዎች ብዛት:", min_value=1, max_value=15, value=3, step=1, key="stops_dist_planner")
+
+st.markdown("#### 📍 ማቆሚያዎቹን እና የጭነት ክብደታቸውን ያስገቡ (ቅደም ተከተሉ በርቀት በራሱ ይደረደራል):")
+
+raw_stops = []
+for i in range(int(num_stops)):
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        default_stop_idx = min(i + 1, len(all_locations) - 1)
+        stop_loc = st.selectbox(f"ማቆሚያ #{i+1} ቦታ:", all_locations, index=default_stop_idx, key=f"dist_stop_loc_{i}")
+    with c2:
+        load_kg = st.number_input(f"ክብደት (በኪ.ግ - Kg):", min_value=0.0, value=0.0, step=50.0, key=f"dist_stop_kg_{i}")
+    
+    try:
+        dist_km = nx.shortest_path_length(G, source=origin_loc, target=stop_loc, weight='weight')
+        path_to_stop = " ➔ ".join(nx.shortest_path(G, source=origin_loc, target=stop_loc, weight='weight'))
+    except nx.NetworkXNoPath:
+        dist_km = float('inf')
+        path_to_stop = "ቀጥተኛ መንገድ አልተገኘም"
+
+    raw_stops.append({
+        "ማቆሚያ": stop_loc,
+        "ርቀት ከመነሻ (ኪ.ሜ)": dist_km,
+        "ክብደት (Kg)": load_kg,
+        "ክብደት (ኩንታል)": load_kg / 100.0,
+        "ክብደት (ቶን)": load_kg / 1000.0,
+        "የመንገድ መስመር": path_to_stop
+    })
+
+if raw_stops:
+    # በመንገድ ርቀት ከቅርብ ወደ ሩቅ መደርደር (የማውረጃ / የጉዞ ቅደም ተከተል)
+    sorted_stops = sorted(raw_stops, key=lambda x: x["ርቀት ከመነሻ (ኪ.ሜ)"])
+    unloading_df = pd.DataFrame(sorted_stops)
+    unloading_df.insert(0, "የማውረጃ / ጉዞ ቅደም ተከተል", range(1, len(unloading_df) + 1))
+
+    total_kg = unloading_df["ክብደት (Kg)"].sum()
+    total_qtl = unloading_df["ክብደት (ኩንታል)"].sum()
+    total_ton = unloading_df["ክብደት (ቶን)"].sum()
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("ጠቅላላ ክብደት (Kg)", f"{total_kg:,.2f} Kg")
+    m2.metric("ጠቅላላ ክብደት (ኩንታል)", f"{total_qtl:,.2f} ኩንታል")
+    m3.metric("ጠቅላላ ክብደት (ቶን)", f"{total_ton:,.2f} ቶን")
+
+    if total_qtl > truck_capacity_qtl:
+        st.error(f"⚠️ ማስጠንቀቂያ፡ ጠቅላላው ጭነት ({total_qtl:,.2f} ኩንታል) ከመኪናው አቅም ({truck_capacity_qtl:,.2f} ኩንታል) በ **{total_qtl - truck_capacity_qtl:,.2f} ኩንታል** በልጧል!")
+    else:
+        st.success(f"✅ ክብደቱ በመኪናው አቅም ልክ ነው (ቀሪ ቦታ: {truck_capacity_qtl - total_qtl:,.2f} ኩንታል)።")
+
+    st.markdown("#### 🚚 በመንገድ ርቀት የተደረደረ የማውረጃ ቅደም ተከተል (ከቅርብ ወደ ሩቅ):")
+    st.dataframe(unloading_df, use_container_width=True, hide_index=True)
+
+    st.markdown("#### 🏗️ የመጋዘን የመጫኛ ቅደም ተከተል (LIFO - ሩቅ የሆነው መጀመሪያ ይጫናል፣ ቅርብ ያለው መጨረሻ በበር አካባቢ):")
+    loading_df = unloading_df.iloc[::-1].drop(columns=["የማውረጃ / ጉዞ ቅደም ተከተል"]).copy()
+    loading_df.insert(0, "የመጫኛ ቅደም ተከተል", range(1, len(loading_df) + 1))
+    st.dataframe(loading_df, use_container_width=True, hide_index=True)
+
+# ==========================================
+# 5. ፈጣን የኩንታል እና ቶን ማስያዣ (Quick Weight Converter)
+# ==========================================
+st.markdown("---")
+st.subheader("⚖️ ፈጣን የጭነት ክብደት ማስያዣ (Kg ➔ ኩንታል / ቶን)")
+quick_kg = st.number_input("የጭነቱን ክብደት በኪሎ ግራም (Kg) ያስገቡ:", min_value=0.0, value=1000.0, step=100.0, key="quick_calc")
+q1, q2 = st.columns(2)
+q1.metric("ኩንታል (Quintal)", f"{quick_kg / 100:,.2f} ኩንታል")
+q2.metric("ቶን (Ton)", f"{quick_kg / 1000:,.2f} ቶን")
+
+# ==========================================
+# 6. የድርጅት ሎኬሽን (AMG Holdings Gelan) እና የርቀት መፈለጊያ
+# ==========================================
+st.markdown("---")
+st.title("🏢 የድርጅት ሎኬሽን (AMG Holdings - Gelan) እና የጉዞ መስመር መቆጣጠሪያ")
+
+st.markdown("### 📍 የድርጅቱ መገኛ (AMG Holdings Industry Park - Gelan)")
+st.markdown("[🗺️ የ AMG Holdings Gelan ሎኬሽን በ Google Maps ለመክፈት እዚህ ይጫኑ](https://www.google.com/maps/place//data=!4m2!3m1!19sChIJKQJqLAB5SxYR0u9ih_8JK5Q)")
+
+st.markdown("### 🛣️ ከየትኛውም ሰፈር ወይም ከተማ እስከ መድረሻ ያለው ርቀት እና ማቆሚያዎች")
 col_start, col_end = st.columns(2)
 with col_start:
     start_point = st.selectbox("መነሻ (ሰፈር ወይም ከተማ):", all_locations, index=all_locations.index("AMG Holdings - Gelan") if "AMG Holdings - Gelan" in all_locations else 0, key="start_route_all")
@@ -258,4 +279,3 @@ if st.button("አጠቃላይ መስመሩን፣ ሰፈሮቹን እና ርቀ�
         
     except nx.NetworkXNoPath:
         st.warning(f"⚠️ ከ '{start_point}' እስከ '{end_point}' ያለው ቀጥተኛ የመንገድ ትስስር በዚህ መረብ ውስጥ አልተገኘም።")
-    
